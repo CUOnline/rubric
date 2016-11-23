@@ -5,10 +5,10 @@ class RubricWorker
   @queue = 'rubric'
 
   def self.perform(account_id, email)
-    CSV.open('./out.csv', 'wb') do |csv|
-      csv << self.csv_headers
-      self.rubric_data_rows.map{ |row| csv << row }
-    end
+    csv_rows = [self.csv_headers]
+    csv_rows << self.rubric_data_rows(account_id).map{ |row| row.join(',') }
+    csv_string = csv_rows.join("\n") + "\n"
+    self.send_mail(csv_string, email)
   end
 
   def self.csv_headers
@@ -90,5 +90,15 @@ class RubricWorker
       next_page = RubricApp.parse_pages(response.headers[:link])['next']
     end
     data.flatten.reject(&:nil?)
+  end
+
+  def self.send_mail(csv_data, email)
+    mail = Mail.new
+    mail.from = RubricApp.from_email
+    mail.to = email
+    mail.subject = 'Canvas Account Rubric Report'
+    mail.body = 'Attached is your rubric report'
+    mail.attachments['account_rubrics.csv'] = csv_data
+    mail.deliver!
   end
 end

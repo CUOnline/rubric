@@ -4,7 +4,12 @@ class RubricWorkerTest < Minitest::Test
   def test_perform
     account_id = 10
     email = 'test@example.com'
-    RubricWorker.expects(:rubric_data_rows).returns([[]])
+    RubricWorker.expects(:csv_headers).returns(['header1,header2'])
+    RubricWorker.expects(:rubric_data_rows)
+                .with(account_id)
+                .returns([['data1','data2'],['data3','data4']])
+    RubricWorker.expects(:send_mail)
+                .with("header1,header2\ndata1,data2\ndata3,data4\n", email)
     RubricWorker.perform(account_id, email)
   end
 
@@ -142,5 +147,21 @@ class RubricWorkerTest < Minitest::Test
         :headers => {'Content-Type' => 'application/json', :link => []})
 
     assert_equal(expected, RubricWorker.course_assignments(course_id))
+  end
+
+  def test_send_mail
+    csv_data = "header1,header2\ndata1,data2\ndata3,data4\n"
+    email = 'test@example.com'
+    mail_mock = OpenStruct.new(:attachments => {})
+    mail_mock.expects(:deliver!)
+    Mail.expects(:new).returns(mail_mock)
+
+    RubricWorker.send_mail(csv_data, email)
+
+    assert_equal 'Canvas <donotreply@ucdenver.edu>', mail_mock.from
+    assert_equal 'test@example.com', mail_mock.to
+    assert_equal 'Canvas Account Rubric Report', mail_mock.subject
+    assert_equal 'Attached is your rubric report', mail_mock.body
+    assert_equal csv_data, mail_mock.attachments.first[1]
   end
 end

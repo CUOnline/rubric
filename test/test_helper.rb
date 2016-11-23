@@ -37,6 +37,7 @@ class Minitest::Test
   def setup
     WebMock.enable!
     WebMock.disable_net_connect!(allow_localhost: true)
+    Mail::Message.any_instance.stubs(:deliver!)
     app.set :api_cache, false
   end
 end
