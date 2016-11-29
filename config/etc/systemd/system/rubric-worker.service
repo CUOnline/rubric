@@ -1,0 +1,16 @@
+[Unit]
+Description=Account Rubric Data Reporter
+Wants=redis.service
+After=redis.service
+Wants=redis_6379.service
+After=redis_6379.service
+
+[Service]
+User=apache
+WorkingDirectory=/var/www/html/cu-online/rubric/current
+ExecStart=/bin/bash -lc 'bundle exec rake resque:work QUEUE=rubric'
+Restart=always
+KillMode=process
+
+[Install]
+WantedBy=default.target
