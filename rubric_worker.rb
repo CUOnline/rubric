@@ -69,7 +69,7 @@ class RubricWorker
       "SELECT course_dim.canvas_id, course_dim.name as name, enrollment_term_dim.name as term "\
       "FROM course_dim join enrollment_term_dim "\
         "ON course_dim.enrollment_term_id = enrollment_term_dim.id "\
-      "WHERE account_id=?"
+      "WHERE account_id=? AND course_dim.workflow_state != 'deleted'"
 
     RubricApp.canvas_data(query_string, RubricApp.shard_id(account_id))
   end
@@ -79,6 +79,7 @@ class RubricWorker
     next_page = "courses/#{course_id}/assignments?per_page=100"
     while next_page
       response = RubricApp.canvas_api.get(next_page)
+      break if response.status != 200
       data << response.body.collect do |assignment|
         {
           'rubric_id' => assignment['rubric_settings']['id'],
