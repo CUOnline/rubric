@@ -5,7 +5,7 @@ class RubricWorker
   @queue = 'rubric'
 
   def self.perform(account_id, email)
-    csv_rows = [self.csv_headers]
+    csv_rows = [self.csv_headers.join(',')]
     csv_rows << self.rubric_data_rows(account_id).map{ |row| row.join(',') }
     csv_string = csv_rows.join("\n") + "\n"
     self.send_mail(csv_string, email)
