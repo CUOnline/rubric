@@ -69,7 +69,7 @@ class RubricWorker
       "SELECT course_dim.canvas_id, course_dim.name as name, enrollment_term_dim.name as term "\
       "FROM course_dim join enrollment_term_dim "\
         "ON course_dim.enrollment_term_id = enrollment_term_dim.id "\
-      "WHERE account_id=? and course_dim.canvas_id = '346762' limit 1000;"
+      "WHERE account_id=?"
 
     RubricApp.canvas_data(query_string, RubricApp.shard_id(account_id))
   end
