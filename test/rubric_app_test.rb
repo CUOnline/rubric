@@ -12,6 +12,16 @@ class RubricAppTest < Minitest::Test
     Resque.expects(:enqueue).with(RubricWorker, account_id, 'test@example.com')
     post '/', {'custom_canvas_account_id' => account_id}
     assert_equal 200, last_response.status
+    assert_match /will be sent to test@example.com/, last_response.body
+  end
+
+  def test_post_missing_email
+    login({'user_email' => nil})
+    account_id = 10
+    Resque.expects(:enqueue).never
+    post '/', {'custom_canvas_account_id' => account_id}
+    assert_equal 400, last_response.status
+    assert_match /Email for sending report not found/, last_response.body
   end
 
   def test_post_unauthenticated

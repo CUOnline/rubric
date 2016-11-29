@@ -8,7 +8,17 @@ class RubricApp < WolfCore::App
   set :public_paths, [/lti_config/]
 
   post '/' do
-    Resque.enqueue(RubricWorker, params['custom_canvas_account_id'].to_i, session['user_email'])
+    email = session['user_email'] || params['lis_person_contact_email_primary']
+    if email.nil? || email.empty?
+      status 400
+      flash.now[:danger] = 'Email for sending report not found. Please update your Canvas contact information.'
+    else
+      Resque.enqueue(RubricWorker, params['custom_canvas_account_id'].to_i, email)
+      flash.now[:success] = "Report is being generated and will be sent to #{email} when finished."
+    end
+
+    # Explicitly render nothing to get the layout
+    slim ''
   end
 
   get '/lti_config' do
