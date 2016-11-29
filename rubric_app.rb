@@ -7,10 +7,6 @@ class RubricApp < WolfCore::App
   set :auth_paths, [/.*/]
   set :public_paths, [/lti_config/]
 
-  get '/' do
-    'Hello'
-  end
-
   post '/' do
     Resque.enqueue(RubricWorker, params['custom_canvas_account_id'].to_i, session['user_email'])
   end
