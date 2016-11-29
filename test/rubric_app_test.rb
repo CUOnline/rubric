@@ -9,9 +9,13 @@ class RubricAppTest < Minitest::Test
   def test_post
     login
     account_id = 10
+    canvas_url = 'https://test.instructure.com'
+    app.settings.stubs(:canvas_url).returns(canvas_url)
     Resque.expects(:enqueue).with(RubricWorker, account_id, 'test@example.com')
+
     post '/', {'custom_canvas_account_id' => account_id}
     assert_equal 200, last_response.status
+    assert_equal "ALLOW-FROM #{canvas_url}", last_response.headers['X-Frame-Options']
     assert_match /will be sent to test@example.com/, last_response.body
   end
 

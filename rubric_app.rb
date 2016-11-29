@@ -17,6 +17,8 @@ class RubricApp < WolfCore::App
       flash.now[:success] = "Report is being generated and will be sent to #{email} when finished."
     end
 
+    headers 'X-Frame-Options' => "ALLOW-FROM #{settings.canvas_url}"
+
     # Explicitly render nothing to get the layout
     slim ''
   end
