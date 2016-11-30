@@ -7,6 +7,10 @@ class RubricApp < WolfCore::App
   set :auth_paths, [/.*/]
   set :public_paths, [/lti_config/]
 
+  get '/' do
+    'Hello'
+  end
+
   post '/' do
     email = session['user_email'] || params['lis_person_contact_email_primary']
     if email.nil? || email.empty?
