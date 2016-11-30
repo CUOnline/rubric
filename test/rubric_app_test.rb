@@ -3,8 +3,11 @@ require_relative './test_helper'
 class RubricAppTest < Minitest::Test
   def test_get
     login
+    canvas_url = 'https://test.instructure.com'
+    app.settings.stubs(:canvas_url).returns(canvas_url)
     get '/'
     assert_equal 200, last_response.status
+    assert_equal "ALLOW-FROM #{canvas_url}", last_response.headers['X-Frame-Options']
   end
 
   def test_get_lti_config

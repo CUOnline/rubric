@@ -7,8 +7,12 @@ class RubricApp < WolfCore::App
   set :auth_paths, [/.*/]
   set :public_paths, [/lti_config/]
 
+  before do
+    headers 'X-Frame-Options' => "ALLOW-FROM #{settings.canvas_url}"
+  end
+
   get '/' do
-    'Hello'
+    call env.merge('REQUEST_METHOD' => 'POST')
   end
 
   post '/' do
@@ -20,8 +24,6 @@ class RubricApp < WolfCore::App
       Resque.enqueue(RubricWorker, params['custom_canvas_account_id'].to_i, email)
       flash.now[:success] = "Report is being generated and will be sent to #{email} when finished."
     end
-
-    headers 'X-Frame-Options' => "ALLOW-FROM #{settings.canvas_url}"
 
     # Explicitly render nothing to get the layout
     slim ''
