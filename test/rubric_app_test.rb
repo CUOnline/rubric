@@ -32,13 +32,13 @@ class RubricAppTest < Minitest::Test
     assert_equal '/unauthorized', last_request.path
   end
 
-  def test_post
+  def test_post_launch
     account_id = '10'
     email = 'test@example.com'
     app.any_instance.stubs(:valid_lti_request?).returns(true)
     login
 
-    post '/', {'custom_canvas_account_id' => account_id, 'lis_person_contact_email_primary' => email}
+    post '/launch', {'custom_canvas_account_id' => account_id, 'lis_person_contact_email_primary' => email}
     assert_equal 302, last_response.status
     follow_redirect!
     assert_equal account_id, last_request.env['rack.session']['lti_account_id']
@@ -46,32 +46,16 @@ class RubricAppTest < Minitest::Test
     assert_equal '/', last_request.path
   end
 
-  def test_post_invalid_lti_request
+  def test_post_launch_invalid_lti_request
     canvas_url = 'https://test.instructure.com'
     app.settings.stubs(:canvas_url).returns(canvas_url)
     app.any_instance.expects(:valid_lti_request?).returns(false)
     login
 
-    post '/'
+    post '/launch'
     assert_equal 400, last_response.status
     assert_match /Invalid request/, last_response.body
     assert_equal "ALLOW-FROM #{canvas_url}", last_response.headers['X-Frame-Options']
-  end
-
-  def test_post_unauthenticated
-    post '/'
-    assert_equal 302, last_response.status
-    follow_redirect!
-    assert_equal '/canvas-auth-login', last_request.path
-  end
-
-  def test_post_unauthorized
-    login({'user_roles' => ['StudentEnrollment']})
-
-    post '/'
-    assert_equal 302, last_response.status
-    follow_redirect!
-    assert_equal '/unauthorized', last_request.path
   end
 
   def test_post_generate_report

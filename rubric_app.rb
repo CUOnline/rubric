@@ -5,8 +5,9 @@ require './rubric_worker'
 class RubricApp < WolfCore::App
   set :root, File.dirname(__FILE__)
   set :auth_paths, [/.*/]
-  set :public_paths, [/lti_config/]
+  set :public_paths, [/lti_config/, /launch/]
   set :logger, create_logger
+
   enable :exclude_js
   enable :exclude_css
 
@@ -28,8 +29,6 @@ class RubricApp < WolfCore::App
   end
 
   before do
-    session['lti_account_id'] ||= params['custom_canvas_account_id']
-    session['lti_email'] ||= params['lis_person_contact_email_primary']
     headers 'X-Frame-Options' => "ALLOW-FROM #{settings.canvas_url}"
   end
 
@@ -43,8 +42,10 @@ class RubricApp < WolfCore::App
     }
   end
 
-  post '/' do
+  post '/launch' do
     if valid_lti_request?(request, params)
+      session['lti_account_id'] ||= params['custom_canvas_account_id']
+      session['lti_email'] ||= params['lis_person_contact_email_primary']
       redirect mount_point
     else
       status 400
