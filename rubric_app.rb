@@ -7,6 +7,8 @@ class RubricApp < WolfCore::App
   set :auth_paths, [/.*/]
   set :public_paths, [/lti_config/, /launch/]
   set :logger, create_logger
+  set :api_cache, ActiveSupport::Cache::RedisStore.new(
+                    redis_options.merge({:expires_in => 60 * 60 * 48}))
 
   enable :exclude_js
   enable :exclude_css
