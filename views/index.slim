@@ -1,0 +1,11 @@
+link [rel='stylesheet', type='text/css' href='#{mount_point}/assets/wolf_core.css']
+
+- if lti_account_id
+  p This tool will generate a report of assigments which are using account-level rubrics from <b>#{account_name(lti_account_id)}</b>
+
+- if lti_email
+  p The report will be sent to <b>#{lti_email}</b>
+
+- if lti_email && lti_account_id
+  form [method='POST', action='#{mount_point}/generate-report']
+    input [type='submit' value='Run Report' class='btn-cu ']

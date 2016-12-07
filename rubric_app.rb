@@ -6,27 +6,63 @@ class RubricApp < WolfCore::App
   set :root, File.dirname(__FILE__)
   set :auth_paths, [/.*/]
   set :public_paths, [/lti_config/]
+  set :logger, create_logger
+  enable :exclude_js
+  enable :exclude_css
+
+  helpers do
+    def error_message(session)
+      if session['lti_email'].nil? || session['lti_email'].empty?
+        'Email for sending report not found. Please update your Canvas contact information.'
+      elsif session['lti_account_id'].nil?
+        'No account ID provided. Please check LTI tool configuration.'
+      else
+        nil
+      end
+    end
+
+    def account_name(account_id)
+      query = 'SELECT name FROM account_dim WHERE canvas_id = ?'
+      canvas_data(query, session['lti_account_id']).collect{|r| r['name']}.first
+    end
+  end
 
   before do
+    session['lti_account_id'] ||= params['custom_canvas_account_id']
+    session['lti_email'] ||= params['lis_person_contact_email_primary']
     headers 'X-Frame-Options' => "ALLOW-FROM #{settings.canvas_url}"
   end
 
   get '/' do
-    call env.merge('REQUEST_METHOD' => 'POST')
+    error = error_message(session)
+    flash.now[:danger] = error if error
+
+    slim :index, :locals => {
+      :lti_email => session['lti_email'],
+      :lti_account_id => session['lti_account_id']
+    }
   end
 
   post '/' do
-    email = session['user_email'] || params['lis_person_contact_email_primary']
-    if email.nil? || email.empty?
-      status 400
-      flash.now[:danger] = 'Email for sending report not found. Please update your Canvas contact information.'
+    if valid_lti_request?(request, params)
+      redirect mount_point
     else
-      Resque.enqueue(RubricWorker, params['custom_canvas_account_id'].to_i, email)
-      flash.now[:success] = "Report is being generated and will be sent to #{email} when finished."
+      status 400
+      flash.now[:danger] = "Invalid request. Please check LTI configuration"
+      slim ''
+    end
+  end
+
+  post '/generate-report' do
+    error = error_message(session)
+    if error
+      flash[:danger] = error
+    else
+      Resque.enqueue(RubricWorker, session['lti_account_id'], session['lti_email'])
+      flash[:success] = "Report is being generated and will be emailed when complete."
     end
 
-    # Explicitly render nothing to get the layout
-    slim ''
+    redirect mount_point
   end
 
   get '/lti_config' do
