@@ -1,3 +1,5 @@
+ENV['RACK_ENV'] ||= 'test'
+
 require_relative '../rubric_app'
 
 require 'minitest/autorun'
@@ -40,5 +42,6 @@ class Minitest::Test
     Mail::Message.any_instance.stubs(:deliver!)
     app.set :api_cache, false
     app.any_instance.stubs(:account_name).returns('test')
+    RubricApp.settings.stubs(:mount).returns('')
   end
 end

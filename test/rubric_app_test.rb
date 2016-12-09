@@ -39,10 +39,10 @@ class RubricAppTest < Minitest::Test
     login
 
     post '/launch', {'custom_canvas_account_id' => account_id, 'lis_person_contact_email_primary' => email}
-    assert_equal 302, last_response.status
-    follow_redirect!
     assert_equal account_id, last_request.env['rack.session']['lti_account_id']
     assert_equal email, last_request.env['rack.session']['lti_email']
+    assert_equal 302, last_response.status
+    follow_redirect!
     assert_equal '/', last_request.path
   end
 
@@ -65,10 +65,11 @@ class RubricAppTest < Minitest::Test
     Resque.expects(:enqueue).with(RubricWorker, account_id, email)
 
     post '/generate-report'
+
     assert_equal 302, last_response.status
+    assert_match /Report is being generated/, last_request.env['rack.session']['flash'][:success]
     follow_redirect!
     assert_equal '/', last_request.path
-    assert_match /Report is being generated/, last_response.body
   end
 
   def test_post_generate_missing_email
