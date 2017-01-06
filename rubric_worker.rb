@@ -16,7 +16,7 @@ class RubricWorker
       'Course Canvas ID',
       'Course SIS ID',
       'Course Name',
-      'Course Instructors',
+      'Course Instructor(s)',
       'Term',
       'Assigment Name',
       'Assigment ID',
@@ -85,9 +85,12 @@ class RubricWorker
       "FROM course_dim "\
       "JOIN enrollment_dim "\
         "ON enrollment_dim.course_id = course_dim.id "\
+      "JOIN role_dim "\
+        "ON role_dim.id = enrollment_dim.role_id "\
       "JOIN user_dim "\
         "ON user_dim.id = enrollment_dim.user_id "\
-      "WHERE course_dim.canvas_id = ?"
+      "WHERE course_dim.canvas_id = ? "\
+      "AND role_dim.name = 'TeacherEnrollment';"
 
     results = RubricApp.canvas_data(query_string, course_id)
     results.collect{ |r| r['name'] }.join(", ")
