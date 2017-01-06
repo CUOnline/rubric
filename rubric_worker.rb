@@ -13,8 +13,10 @@ class RubricWorker
 
   def self.csv_headers
     [
-      'Course ID',
+      'Course Canvas ID',
+      'Course SIS ID',
       'Course Name',
+      'Course Instructors',
       'Term',
       'Assigment Name',
       'Assigment ID',
@@ -42,7 +44,9 @@ class RubricWorker
     if assignment['rubric_id'] && account_rubric_ids.include?(assignment['rubric_id'])
       [
         course['canvas_id'],
+        course['sis_source_id'],
         course['name'],
+        self.course_instructors(course['canvas_id']),
         course['term'],
         assignment['assignment_title'],
         assignment['assignment_id'],
@@ -66,12 +70,27 @@ class RubricWorker
 
   def self.account_courses(account_id)
     query_string =
-      "SELECT course_dim.canvas_id, course_dim.name as name, enrollment_term_dim.name as term "\
-      "FROM course_dim join enrollment_term_dim "\
+      "SELECT course_dim.canvas_id, course_dim.name as name, course_dim.sis_source_id, "\
+              "enrollment_term_dim.name as term "\
+      "FROM course_dim JOIN enrollment_term_dim "\
         "ON course_dim.enrollment_term_id = enrollment_term_dim.id "\
       "WHERE account_id=? AND course_dim.workflow_state != 'deleted'"
 
     RubricApp.canvas_data(query_string, RubricApp.shard_id(account_id))
+  end
+
+  def self.course_instructors(course_id)
+    query_string =
+      "SELECT user_dim.name "\
+      "FROM course_dim "\
+      "JOIN enrollment_dim "\
+        "ON enrollment_dim.course_id = course_dim.id "\
+      "JOIN user_dim "\
+        "ON user_dim.id = enrollment_dim.user_id "\
+      "WHERE course_dim.canvas_id = ?"
+
+    results = RubricApp.canvas_data(query_string, course_id)
+    results.collect{ |r| r['name'] }.join(", ")
   end
 
   def self.course_assignments(course_id)

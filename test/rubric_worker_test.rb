@@ -53,8 +53,13 @@ class RubricWorkerTest < Minitest::Test
   end
 
   def test_build_row
+    instructors='I1, I2'
+    account_rubric_ids = [123]
+    course_id = 111
+    RubricWorker.expects(:course_instructors).with(course_id).returns(instructors)
     course = {
-      'canvas_id' => 111,
+      'canvas_id' => course_id,
+      'sis_source_id' => 'sis111',
       'name' => 'Test Course',
       'term' => 'Spring 2016'
     }
@@ -64,9 +69,11 @@ class RubricWorkerTest < Minitest::Test
       'rubric_title' => 'Test Rubric',
       'rubric_id' => 123
     }
+    expected_row = [
+      course_id, 'sis111', 'Test Course', instructors,
+      'Spring 2016', 'Test Assigment', 222, 'Test Rubric', 123
+    ]
 
-    account_rubric_ids = [123]
-    expected_row = [111, 'Test Course', 'Spring 2016', 'Test Assigment', 222, 'Test Rubric', 123]
     assert_equal(expected_row, RubricWorker.build_row(course, assignment, account_rubric_ids))
   end
 
@@ -147,6 +154,14 @@ class RubricWorkerTest < Minitest::Test
         :headers => {'Content-Type' => 'application/json', :link => []})
 
     assert_equal(expected, RubricWorker.course_assignments(course_id))
+  end
+
+  def test_course_instructors
+    course_id = 123
+    results = [{'name' => 'Instructor 1'}, {'name' => 'Instructor 2'}]
+    expected = "Instructor 1, Instructor 2"
+    RubricApp.expects(:canvas_data).with(anything, course_id).returns(results);
+    assert_equal(expected, RubricWorker.course_instructors(course_id))
   end
 
   def test_send_mail
