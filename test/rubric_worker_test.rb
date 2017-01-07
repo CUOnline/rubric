@@ -159,7 +159,7 @@ class RubricWorkerTest < Minitest::Test
   def test_course_instructors
     course_id = 123
     results = [{'name' => 'Instructor 1'}, {'name' => 'Instructor 2'}]
-    expected = "Instructor 1, Instructor 2"
+    expected = "Instructor 1/Instructor 2"
     RubricApp.expects(:canvas_data).with(anything, course_id).returns(results);
     assert_equal(expected, RubricWorker.course_instructors(course_id))
   end

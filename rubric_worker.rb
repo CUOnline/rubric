@@ -93,7 +93,7 @@ class RubricWorker
       "AND role_dim.name = 'TeacherEnrollment';"
 
     results = RubricApp.canvas_data(query_string, course_id)
-    results.collect{ |r| r['name'] }.join(", ")
+    results.collect{ |r| r['name'] }.join("/")
   end
 
   def self.course_assignments(course_id)
