@@ -6,6 +6,7 @@ class RubricApp < WolfCore::App
   set :root, File.dirname(__FILE__)
   set :auth_paths, [/.*/]
   set :public_paths, [/lti_config/, /launch/]
+  set :allowed_roles, ['AccountAdmin', 'TeacherEnrollment']
   set :logger, create_logger
   set :api_cache, ActiveSupport::Cache::RedisStore.new(
                     redis_options.merge({:expires_in => 60 * 60 * 48}))
