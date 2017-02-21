@@ -59,12 +59,11 @@ class RubricWorker
   def self.account_rubric_ids(account_id)
     rubric_ids = []
     next_page = "accounts/#{account_id}/rubrics?per_page=100"
-#   Disable pagination unitil it's fixed https://github.com/instructure/canvas-lms/pull/952
-#   while next_page
+    while next_page
       response = RubricApp.canvas_api.get(next_page)
       rubric_ids << response.body.collect{|rubric| rubric['id']}
-#     next_page = RubricApp.parse_pages(response.headers[:link])["next"]
-#   end
+      next_page = RubricApp.parse_pages(response.headers[:link])["next"]
+    end
     rubric_ids.flatten
   end
 
